@@ -131,9 +131,15 @@ function goToSlide(index) {
 function playLocalVideo(index) {
   const video = document.getElementById("local-video-" + index);
   video.currentTime = 0;
+  video.muted = true; // start muted so autoplay is reliably allowed
   video.onended = () => goToSlide(current + 1);
-  video.play().catch(() => {
-    // If autoplay is blocked for some reason, still advance after a fallback delay
+
+  video.play().then(() => {
+    // Try enabling sound shortly after playback has actually started.
+    // Browsers are generally more permissive about this than starting unmuted.
+    setTimeout(() => { video.muted = false; }, 150);
+  }).catch(() => {
+    // If autoplay is blocked entirely, still advance after a fallback delay
     setTimeout(() => goToSlide(current + 1), 5000);
   });
 }
@@ -143,3 +149,4 @@ goToSlide(0);
 
 </body>
 </html>
+
