@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Real Capital Lobby Display</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+  }
+
+  #stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+    pointer-events: none;
+    background: #000;
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .slide img,
+  .slide video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #000;
+  }
+
+  #video-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage"></div>
+
+<script>
+/* =========================================================
+   SLIDE ORDER
+   - "image": shows for `duration` seconds
+   - "local-video": plays a video file in /assets, advances on end
+   - "youtube-video": plays a YouTube video, advances when it ends
+   ========================================================= */
+const SLIDES = [
+  { type: "image", src: "assets/01-living-the-core.png", duration: 10 },
+  { type: "image", src: "assets/02-internal-careers.png", duration: 10 },
+  { type: "image", src: "assets/03-facebook.png", duration: 10 },
+  { type: "image", src: "assets/04-pinterest.png", duration: 10 },
+  { type: "image", src: "assets/05-instagram-storespace.png", duration: 10 },
+  { type: "image", src: "assets/06-instagram-sudstop.png", duration: 10 },
+  { type: "image", src: "assets/07-linkedin-sudstop.png", duration: 10 },
+  { type: "image", src: "assets/08-quote-outwork.png", duration: 10 },
+  { type: "image", src: "assets/09-quote-past-future.png", duration: 10 },
+  { type: "image", src: "assets/10-quote-birds.png", duration: 10 },
+  { type: "local-video", src: "assets/onboarding-video.mp4" },
+  { type: "local-video", src: "assets/storage-that-cares-short.mp4" },
+];
+
+let current = -1;
+let timer = null;
+
+const stage = document.getElementById("stage");
+
+function buildSlideElement(slideConfig, index) {
+  const el = document.createElement("div");
+  el.className = "slide";
+  el.id = "slide-" + index;
+
+  if (slideConfig.type === "image") {
+    const img = document.createElement("img");
+    img.src = slideConfig.src;
+    el.appendChild(img);
+
+  } else if (slideConfig.type === "local-video") {
+    const video = document.createElement("video");
+    video.src = slideConfig.src;
+    video.muted = true;
+    video.playsInline = true;
+    video.id = "local-video-" + index;
+    el.appendChild(video);
+
+  }
+  return el;
+}
+
+SLIDES.forEach((s, i) => {
+  stage.appendChild(buildSlideElement(s, i));
+});
+
+function showSlide(index) {
+  document.querySelectorAll(".slide").forEach(el => el.classList.remove("active"));
+  document.getElementById("slide-" + index).classList.add("active");
+}
+
+function goToSlide(index) {
+  clearTimeout(timer);
+  current = index % SLIDES.length;
+  const slide = SLIDES[current];
+
+  showSlide(current);
+
+  if (slide.type === "image") {
+    timer = setTimeout(() => goToSlide(current + 1), slide.duration * 1000);
+
+  } else if (slide.type === "local-video") {
+    playLocalVideo(current);
+  }
+}
+
+function playLocalVideo(index) {
+  const video = document.getElementById("local-video-" + index);
+  video.currentTime = 0;
+  video.onended = () => goToSlide(current + 1);
+  video.play().catch(() => {
+    // If autoplay is blocked for some reason, still advance after a fallback delay
+    setTimeout(() => goToSlide(current + 1), 5000);
+  });
+}
+
+goToSlide(0);
+</script>
+
+</body>
+</html>
